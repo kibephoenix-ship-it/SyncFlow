@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import AuthPage from '@/components/auth-page';
+import AuthCallback from '@/components/auth-callback';
 import {
   Clients,
   Invoices,
@@ -56,6 +57,7 @@ function Router() {
         <Route path="/" component={MarketingPage} />
         <Route path="/login" component={AuthPage} />
         <Route path="/signup" component={AuthPage} />
+        <Route path="/auth/callback" component={AuthCallback} />
         <Route path="/dashboard" component={DashboardPage} />
         <Route component={WorkspaceRoutes} />
       </Switch>

@@ -5,11 +5,18 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-// Create the client as the app loads so Supabase can consume an OAuth callback
-// hash even when the redirect lands on a route that does not call an auth
-// method (for example, /dashboard).
+// Initialize Supabase before the callback route renders so it can exchange the
+// authorization code and persist the session after a redirect.
 const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        // Use an authorization code instead of putting access tokens in the URL.
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    })
   : null;
 
 function getSupabaseClient() {
@@ -26,6 +33,9 @@ export async function signUpWithEmail(email, password) {
   const { data, error } = await getSupabaseClient().auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: new URL('/auth/callback', window.location.origin).toString(),
+    },
   });
   if (error) throw error;
   return data;
@@ -44,9 +54,15 @@ export async function signInWithGoogle() {
   const { data, error } = await getSupabaseClient().auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: new URL('/dashboard', window.location.origin).toString(),
+      redirectTo: new URL('/auth/callback', window.location.origin).toString(),
     },
   });
   if (error) throw error;
   return data;
+}
+
+export async function getAuthSession() {
+  const { data, error } = await getSupabaseClient().auth.getSession();
+  if (error) throw error;
+  return data.session;
 }
